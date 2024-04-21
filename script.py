@@ -8,9 +8,10 @@ from sbs_utils.mast.mast import Mast
 from sbs_utils.mast.pollresults import PollResults
 from sbs_utils.mast.label import label
 
-from sbs_utils.procedural.gui import gui_row, gui_icon, gui, gui_section, gui_text, gui_content, gui_change, gui_update
-from sbs_utils.procedural.execution import AWAIT, get_variable, jump, set_shared_variable
+from sbs_utils.procedural.gui import gui_row, gui_icon, gui, gui_section, gui_text, gui_content, gui_change, gui_update, gui_button, gui_represent
+from sbs_utils.procedural.execution import AWAIT, get_shared_variable, jump, set_shared_variable
 from sbs_utils.procedural.timers import timeout
+from sbs_utils.procedural.cosmos import sim_create, sim_resume
 from sbs_utils.procedural.query import safe_int
 from sbs_utils.widgets.listbox import list_box_control
 import os
@@ -34,12 +35,13 @@ def get_mission_list():
             mission = {"name": file, 
                     "category":lines[0],
                     "desc":lines[1],
-                     "icons":[] }
+                    "icons":[] }
             for i in lines[2:]:
                 i = i.split()
                 
                 if len(i)>=2:
-                    icon = {"index": safe_int(i[0]), "color": i[1]}
+                    # icon = {"index": safe_int(i[0]), "color": i[1]}
+                    icon = f"icon_index:{safe_int(i[0])};color:{i[1]};"
                     mission["icons"].append(icon)
 
             missions.append(mission)
@@ -52,7 +54,12 @@ def get_mission_list():
 def main_gui():
     #yield PollResults.OK_RUN_AGAIN
     # gui_reroute_server(server_start)
-    gui_section("area: 0,15,40,100")
+
+
+    lb_sec = gui_section("area: 0,15,40,100")
+    sbs.suppress_client_connect_dialog(0)
+    sim_create()
+    sim_resume()
     
     missions = get_mission_list()
     mission_name = missions[0]["name"]
@@ -62,19 +69,24 @@ def main_gui():
                 missions, 
                 text=lambda x: f"{x['name']}",
                 title=lambda : "text:missions;justify:center;",
+                icon=lambda x: x['icons'],
                 select=True,
                 background="#1571",
                 title_background="#1575",
                 convert_value=lambda x: f"{x['name']}"
-                  )
+                )
     
+        
 
     def select():
         #mission = get_variable('mission')
         mission_sel = lb_missions.get_selected()
         if len(mission_sel) >0:
             mission = mission_sel[0]
-            update_icons(mission)
+
+            set_shared_variable("mission", mission.get('name'))
+
+            #update_icons(mission)
             gui_update("cat", f"text: {mission['category']}")
             gui_update("desc", f"text: {mission['desc']}")
         yield PollResults.OK_YIELD
@@ -95,7 +107,9 @@ def main_gui():
     gui_text(f"text: {cat}", style="tag:cat;")
     gui_row(style="row-height: 45px")
     
-    create_icons(missions[0])    
+    # create_icons(missions[0])
+
+    
 
     gui_row()
     gui_text(f"text: {desc}", style="tag:desc;padding:0,20px;")
@@ -118,14 +132,15 @@ def create_icons(mis):
         else:
             i = {"index": 1000, "color": "#0000"}
         #     gui_text(f"",style=f"tag: icon-{c};")
-        gui_icon(f"icon_index: {i['index']};color:{i['color']};",style=f"tag: icon-{c};")
+        gui_icon(i,style=f"tag: icon-{c};")
     
 
 
 @label()
 def start():
-    gui_section("area: 15,15,85,100")
-    gui_text(f"text: With the right api the script would run")
+    mission = get_shared_variable("mission")
+    if mission is not None:
+        sbs.run_next_mission(mission)
 
     yield AWAIT(gui({"back": main_gui}, timeout=timeout(10)))
     yield jump(main_gui)
