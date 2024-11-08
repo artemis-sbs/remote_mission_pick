@@ -68,7 +68,7 @@ def main_gui():
     lb_missions = list_box_control(
                 missions, 
                 text=lambda x: f"{x['name']}",
-                title=lambda : "text:missions;justify:center;",
+                title=lambda : "$text:missions;justify:center;",
                 icon=lambda x: x['icons'],
                 select=True,
                 background="#1571",
@@ -87,8 +87,8 @@ def main_gui():
             set_shared_variable("mission", mission.get('name'))
 
             #update_icons(mission)
-            gui_update("cat", f"text: {mission['category']}")
-            gui_update("desc", f"text: {mission['desc']}")
+            gui_update("cat", f"$text: {mission['category']}")
+            gui_update("desc", f"$text: {mission['desc']}")
         yield PollResults.OK_YIELD
 
     gui_content(lb_missions, var="mission")
@@ -104,7 +104,7 @@ def main_gui():
     desc = missions[0]["desc"] if len(missions)!=0 else "no missions"
 
     gui_row(style="row-height: 45px")
-    gui_text(f"text: {cat}", style="tag:cat;")
+    gui_text(f"$text: {cat}", style="tag:cat;")
     gui_row(style="row-height: 45px")
     
     # create_icons(missions[0])
@@ -112,7 +112,7 @@ def main_gui():
     
 
     gui_row()
-    gui_text(f"text: {desc}", style="tag:desc;padding:0,20px;")
+    gui_text(f"$text: {desc}", style="tag:desc;padding:0,20px;")
     
     yield AWAIT(gui({"start": start}))
 
