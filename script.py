@@ -7,11 +7,12 @@ from sbs_utils.mast.maststorypage import StoryPage
 from sbs_utils.mast.maststory import MastStory
 
 from sbs_utils.mast.mast import Mast
+from sbs_utils.mast.mast_node import MastDataObject
 from sbs_utils.mast.pollresults import PollResults
 from sbs_utils.mast.label import label
 from sbs_utils.mast_sbs import mast_sbs_procedural
 
-from sbs_utils.procedural.gui import gui_row, gui_icon, gui, gui_section, gui_text, gui_content, gui_change, gui_update, gui_button, gui_represent
+from sbs_utils.procedural.gui import gui_row, gui_icon, gui, gui_section, gui_text, gui_update, gui_blank, gui_list_box, gui_message_callback
 from sbs_utils.procedural.execution import AWAIT, get_shared_variable, jump, set_shared_variable
 from sbs_utils.procedural.timers import timeout
 from sbs_utils.procedural.cosmos import sim_create, sim_resume
@@ -44,12 +45,29 @@ def get_mission_list():
                 i = i.split()
                 
                 if len(i)>=2:
-                    # icon = {"index": safe_int(i[0]), "color": i[1]}
-                    icon = f"icon_index:{safe_int(i[0])};color:{i[1]};"
+                    icon = {"index": safe_int(i[0]), "color": i[1]}
+                    #icon = f"icon_index:{safe_int(i[0])};color:{i[1]};"
                     mission["icons"].append(icon)
 
-            missions.append(mission)
+            missions.append(MastDataObject(mission))
     return missions
+
+def template_mission_item(item):
+
+    
+    text = item.get("name", "Error no name")
+    gui_row("row-height: 1.2em;padding:13px;")
+    #print(item.icons)
+   
+
+    gui_blank(1,"col-width:10px;")
+    gui_text(f"$text:{text};justify: left;")
+    for icon_obj in item.icons:
+        icon = icon_obj.get("icon_index")
+        color = icon_obj.get("color")
+        gui_icon(f"icon_index:{icon};color:{color};")
+    gui_row("row-height: 0.2em;")
+    gui_blank()
 
                 
 
@@ -60,52 +78,36 @@ def main_gui():
     # gui_reroute_server(server_start)
 
 
-    lb_sec = gui_section("area: 0,15,40,100")
+    lb_sec = gui_section("area: 0,15,40,100-50px")
     sbs.suppress_client_connect_dialog(0)
     sim_create()
     sim_resume()
     
     missions = get_mission_list()
-    mission_name = missions[0]["name"]
-    #set_shared_variable('mission', mission_name)
-    
-    lb_missions = list_box_control(
-                missions, 
-                text=lambda x: f"{x['name']}",
-                title=lambda : "$text:missions;justify:center;",
-                icon=lambda x: x['icons'],
-                select=True,
-                background="#1571",
-                title_background="#1575",
-                convert_value=lambda x: f"{x['name']}"
-                )
-    
-        
+    mission_name = missions[0].name 
+    set_shared_variable('mission', mission_name)
+    lb_missions = gui_list_box(missions, "", item_template=template_mission_item, select=True)
 
-    def select():
-        #mission = get_variable('mission')
-        mission_sel = lb_missions.get_selected()
-        if len(mission_sel) >0:
-            mission = mission_sel[0]
-
-            set_shared_variable("mission", mission.get('name'))
-
+    def select(event):
+        print("SELECT")
+        mission_sel = lb_missions.get_selected_index()
+        if mission_sel < len(missions):
+            mission = missions[mission_sel]
+            set_shared_variable("mission", mission.get('name', "none"))
             #update_icons(mission)
-            gui_update("cat", f"$text: {mission['category']}")
-            gui_update("desc", f"$text: {mission['desc']}")
-        yield PollResults.OK_YIELD
-
-    gui_content(lb_missions, var="mission")
-    lb_missions.set_value(mission_name)
-    gui_change("mission", select) 
-
+            gui_update("cat", f"$text: {mission.get('category', 'none')};")
+            gui_update("desc", f"$text: {mission.get('desc','')}")
+    #
+    # New in v1.1.0 can set a callback
+    #
+    gui_message_callback(lb_missions, select)
     #
     # Property column
     #
     gui_section("area: 45,15,100,100")
 
-    cat = missions[0]["category"] if len(missions)!=0 else "no missions"
-    desc = missions[0]["desc"] if len(missions)!=0 else "no missions"
+    cat = missions[0].category if len(missions)!=0 else "no missions"
+    desc = missions[0].desc if len(missions)!=0 else "no missions"
 
     gui_row(style="row-height: 45px")
     gui_text(f"$text: {cat}", style="tag:cat;")
