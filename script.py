@@ -17,7 +17,6 @@ from sbs_utils.procedural.execution import AWAIT, get_shared_variable, jump, set
 from sbs_utils.procedural.timers import timeout
 from sbs_utils.procedural.cosmos import sim_create, sim_resume
 from sbs_utils.procedural.query import safe_int
-from sbs_utils.pages.widgets.listbox import list_box_control
 import os
 from sbs_utils.fs import get_missions_dir, get_mission_name
 
