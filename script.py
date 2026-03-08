@@ -94,9 +94,11 @@ try:
         set_shared_variable('mission', mission_name)
         lb_missions = gui_list_box(missions, "", item_template=template_mission_item, select=True)
 
-        def select(event):
-            print("SELECT")
+        def select(event, sender):
+            # print("SELECT")
             mission_sel = lb_missions.get_selected_index()
+            if mission_sel is None:
+                return
             if mission_sel < len(missions):
                 mission = missions[mission_sel]
                 set_shared_variable("mission", mission.get('name', "none"))
