@@ -1,4 +1,0 @@
-Remote
-A mission to select and run other missions.
-144 #48f
-147 #9da36c
