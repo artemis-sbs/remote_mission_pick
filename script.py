@@ -38,18 +38,34 @@ try:
                 continue
             if file == this_mission:
                 continue
-            if os.path.isfile(os.path.join(dir, file, "description.txt")):
-                file1 = open(os.path.join(dir, file, "description.txt"), 'r')
+            yaml_path = os.path.join(dir, file, "description.yaml")
+            txt_path = os.path.join(dir, file, "description.txt")
+            if os.path.isfile(yaml_path):
+                try:
+                    from sbs_utils import yaml
+                    with open(yaml_path, 'r') as f:
+                        data = yaml.safe_load(f) or {}
+                    mission = {
+                        "name": file,
+                        "category": data.get("Category", ""),
+                        "desc": data.get("Description", ""),
+                        "icons": []
+                    }
+                    missions.append(MastDataObject(mission))
+                except Exception:
+                    pass
+            elif os.path.isfile(txt_path):
+                file1 = open(txt_path, 'r')
                 lines = file1.readlines()
                 while len(lines) < 3:
                     lines.append("")
-                mission = {"name": file, 
+                mission = {"name": file,
                         "category":lines[0],
                         "desc":lines[1],
                         "icons":[] }
                 for i in lines[2:]:
                     i = i.split()
-                    
+
                     if len(i)>=2:
                         icon = {"index": safe_int(i[0]), "color": i[1]}
                         #icon = f"icon_index:{safe_int(i[0])};color:{i[1]};"
